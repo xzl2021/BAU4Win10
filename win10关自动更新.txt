@@ -1,0 +1,32 @@
+Windows10彻底禁止自动更新 各版本通用
+ 
+MikeYoo 0人评论 112人阅读 2018-09-09 11:26:18 
+Win10自动更新一直是一个让人头大的问题，虽然每次更新可以带来安全性的提升和新功能，然而不能自由选择是否更新确实是一个很让人吐槽的点，特别是当你给别人演示方案或者和×××开黑的时候，突然蹦出个熟悉的蓝底白字：正在更新Windows，请勿关闭计算机~ 估计砸电脑的心都有了吧
+笔者用Win10也是很长时间了，从最早的1511到现在的1703，马上1809又要开始推送，估计网络上又会出现一大批吐槽更新的帖子了。在之前网上流传的最多关闭自动更新的方法就是 关闭Windows Update服务 之前这个方法确实是很有用，然而微软在后面的版本静默启用Windows Update服务，即使你已经设置禁用状态。后来笔者发现基本上都是在你重启开机的时候这个服务会更换状态，也就是说在你开机到关机的这段时间内，如果你的Windows Update服务是禁用的，那么系统不会在后台悄悄启用。那么我写个脚本在每次开机的时候禁用 Windows Update服务 不就解决了么~ 废话不多说，上脚本
+
+@echo off  
+>nul 2>&1 "%SYSTEMROOT%\system32\cacls.exe" "%SYSTEMROOT%\system32\config\system" 
+ 
+if '%errorlevel%' NEQ '0' (  
+    goto UACPrompt  
+) else ( goto gotAdmin )  
+   
+:UACPrompt  
+    echo Set UAC = CreateObject^("Shell.Application"^) > "%temp%\getadmin.vbs" 
+    echo UAC.ShellExecute "%~s0", "", "", "runas", 1 >> "%temp%\getadmin.vbs" 
+    "%temp%\getadmin.vbs" 
+    exit /B  
+   
+:gotAdmin  
+    if exist "%temp%\getadmin.vbs" ( del "%temp%\getadmin.vbs" )  
+    pushd "%CD%" 
+    CD /D "%~dp0" 
+::
+net stop wuauserv
+sc config wuauserv start=disabled
+
+复制上面的内容另存为 wupdate.bat
+然后放到下面的路径下
+C:\Users\你的用户名\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup
+
+PS：如果你的电脑UAC权限默认，那么每次开机的时候都会弹出提示是否运行这个脚本
